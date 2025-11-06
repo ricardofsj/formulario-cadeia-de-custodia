@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadeia de Custódia - Evidências Digitais (Dark)</title>
+    <!-- Carrega Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuração de Fonte Padrão (Inter) */
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Estilos específicos para o campo de Assinatura */
+        #signatureCanvas {
+            border: 1px solid #4a5568; /* Borda mais escura */
+            background-color: #374151; /* Fundo do canvas ligeiramente mais claro */
+            touch-action: none; 
+        }
+
+        /* Estilos de Impressão */
+        @media print {
+            .no-print { display: none !important; }
+            body {
+                background: white !important; /* Fundo branco para impressão */
+                color: #000 !important; /* Texto preto para impressão */
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                background-color: white !important;
+                color: #000 !important;
+            }
+            /* Garantir que o canvas da assinatura apareça como imagem */
+            #signatureImage {
+                display: block !important;
+                border: 2px solid #333;
+                width: 100%;
+                height: 100px;
+            }
+            #signatureCanvas {
+                display: none !important;
+            }
+            .section-title {
+                border-bottom: 2px solid #3b82f6; /* Azul claro para acentuação na impressão */
+                padding-bottom: 4px;
+                color: #1f2937 !important; /* Cor escura */
+            }
+            input, textarea, select {
+                border: none !important;
+                border-bottom: 1px solid #ccc !important;
+                background-color: white !important;
+                color: #000 !important;
+                padding-left: 0 !important;
+            }
+            .transfer-table td, .transfer-table th {
+                border: 1px solid #ddd !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen p-4 sm:p-8 text-gray-100">
+    <div class="container mx-auto max-w-4xl bg-gray-800 shadow-2xl rounded-xl overflow-hidden print:shadow-none print:rounded-none">
+        
+        <!-- CABEÇALHO DARK -->
+        <div class="bg-gradient-to-r from-blue-900 to-gray-900 text-white p-6 sm:p-8 text-center border-b border-gray-700">
+            <h1 class="text-3xl font-extrabold uppercase tracking-wider mb-1">🔒 Cadeia de Custódia Digital</h1>
+            <p class="text-sm opacity-80">Formulário de Controle de Evidências Digitais & Integridade Forense</p>
+            <span class="inline-block bg-white bg-opacity-10 text-xs px-3 py-1 mt-3 rounded-full font-medium text-blue-300">DFIR - Padrão Dark</span>
+        </div>
+        
+        <div class="p-4 sm:p-8 md:p-10">
+            
+            <!-- ALERTA DE IMPORTÂNCIA DARK -->
+            <div class="bg-yellow-900 border-l-4 border-yellow-600 p-4 mb-8 rounded-lg text-yellow-300">
+                <div class="font-bold text-sm">⚠️ IMPORTANTE - PREENCHIMENTO OBRIGATÓRIO</div>
+                <div class="text-sm mt-1 text-yellow-400">
+                    Este formulário documenta a cadeia de custódia. Preencha todos os campos com exatidão, pois falhas podem comprometer a validade da evidência em juízo.
+                </div>
+            </div>
+
+            <form id="custodyForm" onsubmit="return false;">
+                
+                <!-- SEÇÃO 1: IDENTIFICAÇÃO DO CASO -->
+                <div class="section mb-8">
+                    <h2 class="section-title text-xl font-bold text-blue-400 mb-5 border-l-4 border-blue-600 pl-3">1. Identificação do Caso</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Número do Caso/Processo:</label>
+                            <input type="text" id="caseNumber" placeholder="Ex: 2025-XXXX" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Número da Evidência:</label>
+                            <input type="text" id="evidenceNumber" placeholder="Ex: 001" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Autoridade Requisitante:</label>
+                        <input type="text" id="requestingAuthority" placeholder="Ex: Delegacia de Polícia Civil - 1ª DP" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Inquérito Policial/Procedimento:</label>
+                            <input type="text" id="policeInquiry" placeholder="Ex: IP 123/2025" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Data da Solicitação:</label>
+                            <input type="date" id="requestDate" class="w-full p-2 border border-gray-600 bg-gray-700 text-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Natureza da Ocorrência:</label>
+                        <textarea id="natureOfOccurrence" placeholder="Ex: Fraude eletrônica, invasão de sistema, pornografia infantil, etc." class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[80px]"></textarea>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 2: COLETA DA EVIDÊNCIA -->
+                <div class="section mb-8">
+                    <h2 class="section-title text-xl font-bold text-blue-400 mb-5 border-l-4 border-blue-600 pl-3">2. Coleta da Evidência</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Data da Coleta:</label>
+                            <input type="date" id="collectionDate" class="w-full p-2 border border-gray-600 bg-gray-700 text-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Hora da Coleta:</label>
+                            <input type="time" id="collectionTime" class="w-full p-2 border border-gray-600 bg-gray-700 text-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Local da Coleta:</label>
+                            <input type="text" id="collectionLocation" placeholder="Endereço ou ambiente" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Coletado por (Nome):</label>
+                            <input type="text" id="collectorName" placeholder="Nome completo do perito/agente" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Matrícula/Registro:</label>
+                            <input type="text" id="collectorRegistration" placeholder="Ex: Perito 1234" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Coletado de (Custodiante Anterior):</label>
+                        <input type="text" id="previousCustodian" placeholder="Nome completo da pessoa de quem foi apreendido" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 3: DESCRIÇÃO DA EVIDÊNCIA -->
+                <div class="section mb-8">
+                    <h2 class="section-title text-xl font-bold text-blue-400 mb-5 border-l-4 border-blue-600 pl-3">3. Descrição da Evidência Física</h2>
+
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Tipo de Evidência:</label>
+                        <div id="evidenceTypeGroup" class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-200">
+                            <!-- Checkboxes com estilo Tailwind aprimorado -->
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="HD/HDD" id="tipo1" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo1" class="ml-2">HD/HDD</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="SSD SATA" id="tipo2" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo2" class="ml-2">SSD SATA</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="NVMe M.2" id="tipo3" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo3" class="ml-2">NVMe M.2</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="Pen Drive" id="tipo4" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo4" class="ml-2">Pen Drive</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="Smartphone" id="tipo5" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo5" class="ml-2">Smartphone</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="Computador Completo" id="tipo6" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo6" class="ml-2">Computador Completo</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="Notebook" id="tipo7" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo7" class="ml-2">Notebook</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="evidenceType" value="Cartão SD/MicroSD" id="tipo8" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="tipo8" class="ml-2">Cartão SD/MicroSD</label></div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Número de Série (Serial Number):</label>
+                            <input type="text" id="serialNumber" placeholder="Serial Number - CRÍTICO para identificação!" class="w-full p-2 border border-red-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Capacidade (Aprox.):</label>
+                            <input type="text" id="capacity" placeholder="Ex: 500GB, 1TB" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Descrição Física/Estado:</label>
+                        <textarea id="physicalDescription" placeholder="Descreva cor, modelo, arranhões, danos, etiquetas, e estado ao ser coletado." class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[100px]"></textarea>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 4: AQUISIÇÃO FORENSE -->
+                <div class="section mb-8">
+                    <h2 class="section-title text-xl font-bold text-blue-400 mb-5 border-l-4 border-blue-600 pl-3">4. Aquisição Forense (Geração da Imagem)</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Data da Aquisição:</label>
+                            <input type="date" id="acquisitionDate" class="w-full p-2 border border-gray-600 bg-gray-700 text-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Ferramenta Utilizada:</label>
+                            <input type="text" id="toolUsed" placeholder="Ex: Guymager, FTK Imager, dc3dd, Cellebrite" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Hash MD5 da Imagem Forense:</label>
+                        <input type="text" id="hashMd5" placeholder="32 caracteres hexadecimais (Hash da IMAGEM)" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="form-group mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Hash SHA-256 da Imagem Forense:</label>
+                        <input type="text" id="hashSha256" placeholder="64 caracteres hexadecimais (Hash da IMAGEM)" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="form-group mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Integridade e Bloqueador:</label>
+                        <div id="integrityChecks" class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-200">
+                            <div class="flex items-center"><input type="checkbox" name="integrityCheck" value="Hashes conferem" id="verif1" class="rounded text-green-600 focus:ring-green-500 bg-gray-700 border-gray-600"><label for="verif1" class="ml-2 font-semibold text-green-500">✅ Hashes conferem</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="integrityCheck" value="Bloqueador Hardware" id="bloq1" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="bloq1" class="ml-2">Bloqueador Hardware</label></div>
+                            <div class="flex items-center"><input type="checkbox" name="integrityCheck" value="Bloqueador Software" id="bloq2" class="rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"><label for="bloq2" class="ml-2">Bloqueador Software</label></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SEÇÃO 5: HISTÓRICO DE TRANSFERÊNCIAS -->
+                <div class="section mb-8">
+                    <h2 class="section-title text-xl font-bold text-blue-400 mb-5 border-l-4 border-blue-600 pl-3">5. Histórico de Transferências (Chain of Custody)</h2>
+                    
+                    <p class="text-xs text-gray-400 mb-3">Registre cada mudança de custodiante (De/Para), incluindo data, hora e motivo.</p>
+
+                    <div class="overflow-x-auto">
+                        <table class="transfer-table w-full border border-gray-600 rounded-lg overflow-hidden">
+                            <thead class="bg-gray-700 text-blue-300">
+                                <tr>
+                                    <th class="p-2 text-xs font-semibold text-left border-r border-gray-600" style="min-width: 130px;">Data/Hora</th>
+                                    <th class="p-2 text-xs font-semibold text-left border-r border-gray-600" style="min-width: 150px;">Custodiante ANTERIOR</th>
+                                    <th class="p-2 text-xs font-semibold text-left border-r border-gray-600" style="min-width: 150px;">Custodiante ATUAL</th>
+                                    <th class="p-2 text-xs font-semibold text-left" style="min-width: 100px;">Motivo</th>
+                                    <th class="p-2 text-xs font-semibold text-center no-print" style="width: 50px;">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transferTableBody">
+                                <!-- Linha inicial para coleta -->
+                                <tr class="border-t border-gray-600">
+                                    <td class="p-2 text-sm"><input type="datetime-local" class="transfer-datetime w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500"></td>
+                                    <td class="p-2 text-sm"><input type="text" class="transfer-from w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500" placeholder="Coletado de (nome)"></td>
+                                    <td class="p-2 text-sm"><input type="text" class="transfer-to w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500" placeholder="Perito/Agente"></td>
+                                    <td class="p-2 text-sm"><input type="text" class="transfer-reason w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500" value="Coleta Inicial" readonly></td>
+                                    <td class="p-2 text-center no-print bg-gray-700"></td>
+                                </tr>
+                                <!-- Linhas dinâmicas serão adicionadas aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button type="button" class="btn-add bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg mt-3 transition duration-150 no-print" onclick="addTransferRow()">
+                        + Adicionar Transferência
+                    </button>
+                </div>
+                
+                <!-- SEÇÃO 6: ARMAZENAMENTO E ASSINATURAS -->
+                <div class="section mb-8">
+                    <h2 class="section-title text-xl font-bold text-blue-400 mb-5 border-l-4 border-blue-600 pl-3">6. Declaração, Assinatura e Localização</h2>
+                    
+                    <div class="form-group mb-6">
+                        <p class="text-xs italic text-gray-400 mb-1">Declaro que a evidência foi manuseada de acordo com as diretrizes forenses.</p>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Assinatura do Custodiante Atual (Digitalize ou Assine Após Impressão):</label>
+                        
+                        <!-- Canvas para Assinatura Digital -->
+                        <canvas id="signatureCanvas" width="800" height="150" class="w-full max-w-full rounded-lg shadow-inner"></canvas>
+                        
+                        <!-- Imagem Base64 da Assinatura (para Impressão e Markdown) -->
+                        <img id="signatureImage" class="hidden w-full h-[150px] object-contain object-left mt-2" src="" alt="Assinatura Digitalizada">
+
+                        <div class="flex gap-2 mt-2 no-print">
+                            <button type="button" onclick="clearSignature()" class="text-xs text-red-500 hover:text-red-400 font-medium transition duration-150">
+                                Limpar Assinatura
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Nome do Responsável Atual:</label>
+                            <input type="text" id="currentResponsible" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Local de Armazenamento:</label>
+                            <input type="text" id="storageLocation" placeholder="Ex: Sala de Evidências - Armário 3" class="w-full p-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTÕES DE AÇÃO -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 no-print">
+                    <!-- Botão de Exportação Markdown (NOVO) -->
+                    <button type="button" class="export-btn w-full bg-gradient-to-r from-teal-600 to-green-700 hover:from-teal-700 hover:to-green-800 text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300" onclick="generateMarkdown()">
+                        📝 EXPORTAR MARKDOWNN
+                    </button>
+                    <!-- Botão de Impressão -->
+                    <button type="button" class="print-btn w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300" onclick="handlePrint()">
+                        🖨️ IMPRIMIR FORMULÁRIO
+                    </button>
+                </div>
+
+                <!-- NOVO: Área de Exibição do Markdown -->
+                <div id="markdownOutput" class="mt-8 hidden">
+                    <h3 class="text-lg font-bold text-gray-200 mb-2">Conteúdo Markdown Gerado (Pronto a Copiar)</h3>
+                    <textarea id="markdownTextArea" class="w-full min-h-[400px] p-4 text-sm font-mono border border-gray-600 bg-gray-900 text-green-400 rounded-lg shadow-inner" readonly></textarea>
+                    <p class="text-xs text-gray-400 mt-2">Copie o texto acima e cole-o num conversor Markdown para gerar o seu PDF limpo e profissional.</p>
+                </div>
+            </form>
+            
+            <!-- RODAPÉ -->
+            <div class="text-center mt-8 pt-4 border-t border-gray-700">
+                <p class="text-xs text-gray-400">
+                    CADEIA DE CUSTÓDIA - EVIDÊNCIAS DIGITAIS<br>
+                    Gerado em: <span id="dataGeracao" class="font-medium text-gray-300"></span>
+                </p>
+                <p class="text-xs text-gray-500 mt-1">Versão 2.2 - Exibição de Conteúdo Markdown</p>
+            </div>
+            
+        </div>
+    </div>
+    
+    <script>
+        // Variáveis globais para o canvas de assinatura
+        const canvas = document.getElementById('signatureCanvas');
+        const img = document.getElementById('signatureImage');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        const LINE_WIDTH = 3;
+        const LINE_COLOR = '#ffffff'; // Linha branca para fundo escuro
+
+        // 1. Inicialização e Preenchimento Automático
+        document.getElementById('dataGeracao').textContent = new Date().toLocaleString('pt-BR');
+
+        window.addEventListener('load', function() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            
+            // Define a cor de fundo do canvas na inicialização
+            ctx.fillStyle = "#374151"; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height); 
+
+            dateInputs.forEach(input => {
+                if (!input.value) {
+                    input.value = today;
+                }
+            });
+            initializeSignaturePad();
+        });
+
+        // 2. Lógica da Tabela de Transferências
+        function addTransferRow() {
+            const tableBody = document.getElementById('transferTableBody');
+            const newRow = tableBody.insertRow();
+            
+            newRow.classList.add('border-t', 'border-gray-600');
+
+            newRow.innerHTML = `
+                <td class="p-2 text-sm"><input type="datetime-local" class="transfer-datetime w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500"></td>
+                <td class="p-2 text-sm"><input type="text" class="transfer-from w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500" placeholder="Nome/Matrícula"></td>
+                <td class="p-2 text-sm"><input type="text" class="transfer-to w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500" placeholder="Nome/Matrícula"></td>
+                <td class="p-2 text-sm"><input type="text" class="transfer-reason w-full text-sm border border-gray-600 bg-gray-800 text-white rounded p-1 focus:ring-blue-500" placeholder="Motivo"></td>
+                <td class="p-2 text-center no-print bg-gray-700">
+                    <button type="button" onclick="removeTransferRow(this)" class="text-red-500 hover:text-red-400 text-lg transition duration-150">
+                        &times; 
+                    </button>
+                </td>
+            `;
+            newRow.querySelector('.transfer-datetime').focus();
+        }
+
+        function removeTransferRow(button) {
+            const row = button.closest('tr');
+            const tableBody = document.getElementById('transferTableBody');
+            if (row.rowIndex > 0) { 
+                 row.remove();
+            } else {
+                 console.log("A linha de coleta inicial não pode ser removida.");
+            }
+        }
+        
+        // 3. Lógica do Pad de Assinatura (Canvas)
+        function initializeSignaturePad() {
+            // Re-initialize context settings
+            ctx.lineWidth = LINE_WIDTH;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = LINE_COLOR;
+            // Background is set on load
+
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                let clientX, clientY;
+
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function startDrawing(e) {
+                e.preventDefault(); 
+                isDrawing = true;
+                const pos = getMousePos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+                e.preventDefault();
+                const pos = getMousePos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+
+            function stopDrawing() {
+                isDrawing = false;
+                saveSignatureForPrint();
+            }
+
+            // Event Listeners para Mouse
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Event Listeners para Touch
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function clearSignature() {
+            ctx.fillStyle = "#374151"; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            img.src = ''; 
+        }
+
+        function saveSignatureForPrint() {
+            const dataURL = canvas.toDataURL('image/png');
+            img.src = dataURL;
+        }
+        
+        // Função para Impressão
+        function handlePrint() {
+            saveSignatureForPrint();
+            window.print();
+        }
+
+        // Função para Geração de Markdown (NOVO)
+        function generateMarkdown() {
+            // Garante que a assinatura esteja salva antes da exportação
+            saveSignatureForPrint();
+
+            const caseNumber = document.getElementById('caseNumber').value || 'N/A';
+            const evidenceNumber = document.getElementById('evidenceNumber').value || 'N/A';
+            const signatureDataUrl = document.getElementById('signatureImage').src;
+            // Oculta a parte 'data:image/png;base64,' no Markdown
+            const signatureBase64 = signatureDataUrl ? signatureDataUrl.split(',')[1] : null; 
+            
+            // O Markdown para a imagem Base64 é especial: precisa ser no formato HTML para compatibilidade em alguns parsers.
+            // Para simplificar, usamos uma tag HTML IMG com Base64 ou texto simples.
+            let signatureMarkdown;
+            if (signatureBase64) {
+                signatureMarkdown = `<img src="data:image/png;base64,${signatureBase64}" alt="Assinatura Digital" style="max-width: 300px; max-height: 100px;">`;
+            } else {
+                signatureMarkdown = 'Sem Assinatura Digital Registrada.';
+            }
+
+            
+            // Função auxiliar para obter valores de checkboxes
+            const getCheckedValues = (name) => {
+                return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+                    .map(cb => cb.value)
+                    .join(', ');
+            };
+
+            // Coleta dados da Tabela de Transferências
+            const transferRows = Array.from(document.getElementById('transferTableBody').rows);
+            let transferHistory = '';
+            transferRows.forEach((row, index) => {
+                const dateTime = row.querySelector('.transfer-datetime').value || 'S/D';
+                const from = row.querySelector('.transfer-from').value || 'S/I';
+                const to = row.querySelector('.transfer-to').value || 'S/I';
+                const reason = row.querySelector('.transfer-reason').value || 'S/M';
+                
+                transferHistory += `| ${dateTime} | ${from} | ${to} | ${reason} |\n`;
+            });
+
+            // Constrói o conteúdo Markdown
+            const markdownContent = `
+# Relatório de Cadeia de Custódia Digital - ${caseNumber}
+
+## 📄 Informações do Documento
+| Campo | Valor |
+| :--- | :--- |
+| **Data de Geração** | ${new Date().toLocaleString('pt-BR')} |
+| **Versão** | 2.2 - Exportação Markdown |
+
+---
+
+## 1. Identificação do Caso
+| Campo | Valor |
+| :--- | :--- |
+| Número do Caso/Processo | ${caseNumber} |
+| Número da Evidência | ${evidenceNumber} |
+| Autoridade Requisitante | ${document.getElementById('requestingAuthority').value || 'N/A'} |
+| Inquérito Policial/Procedimento | ${document.getElementById('policeInquiry').value || 'N/A'} |
+| Data da Solicitação | ${document.getElementById('requestDate').value || 'N/A'} |
+| Natureza da Ocorrência | ${document.getElementById('natureOfOccurrence').value || 'N/A'} |
+
+---
+
+## 2. Coleta da Evidência
+| Campo | Valor |
+| :--- | :--- |
+| Data da Coleta | ${document.getElementById('collectionDate').value || 'N/A'} |
+| Hora da Coleta | ${document.getElementById('collectionTime').value || 'N/A'} |
+| Local da Coleta | ${document.getElementById('collectionLocation').value || 'N/A'} |
+| Coletado por (Nome/Matrícula) | ${document.getElementById('collectorName').value || 'N/A'} / ${document.getElementById('collectorRegistration').value || 'N/A'} |
+| Coletado de (Custodiante Anterior) | ${document.getElementById('previousCustodian').value || 'N/A'} |
+
+---
+
+## 3. Descrição da Evidência Física
+| Campo | Valor |
+| :--- | :--- |
+| Tipo de Evidência | ${getCheckedValues('evidenceType') || 'Nenhum'} |
+| Número de Série (CRÍTICO) | ${document.getElementById('serialNumber').value || 'N/A'} |
+| Capacidade (Aprox.) | ${document.getElementById('capacity').value || 'N/A'} |
+| Descrição Física/Estado | ${document.getElementById('physicalDescription').value || 'N/A'} |
+
+---
+
+## 4. Aquisição Forense (Geração da Imagem)
+| Campo | Valor |
+| :--- | :--- |
+| Data da Aquisição | ${document.getElementById('acquisitionDate').value || 'N/A'} |
+| Ferramenta Utilizada | ${document.getElementById('toolUsed').value || 'N/A'} |
+| Hash MD5 da Imagem | ${document.getElementById('hashMd5').value || 'N/A'} |
+| Hash SHA-256 da Imagem | ${document.getElementById('hashSha256').value || 'N/A'} |
+| Integridade e Bloqueador | ${getCheckedValues('integrityCheck') || 'Nenhum'} |
+
+---
+
+## 5. Histórico de Transferências (Chain of Custody)
+
+| Data/Hora | Custodiante ANTERIOR | Custodiante ATUAL | Motivo |
+| :--- | :--- | :--- | :--- |
+${transferHistory}
+
+---
+
+## 6. Declaração, Assinatura e Localização
+
+> Declaro, sob as penas da lei, que as informações constantes neste formulário são verdadeiras e que a evidência foi coletada, manuseada e armazenada de acordo com as melhores práticas forenses, respeitando sua integridade.
+
+### Assinatura do Custodiante Atual
+
+${signatureMarkdown}
+
+| Campo | Valor |
+| :--- | :--- |
+| Nome do Responsável Atual | ${document.getElementById('currentResponsible').value || 'N/A'} |
+| Local de Armazenamento | ${document.getElementById('storageLocation').value || 'N/A'} |
+`;
+            
+            const outputDiv = document.getElementById('markdownOutput');
+            const outputTextArea = document.getElementById('markdownTextArea');
+            
+            outputTextArea.value = markdownContent.trim();
+            outputDiv.classList.remove('hidden');
+            
+            // Scroll para a área de output para o utilizador ver o resultado
+            outputDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+
+        // Antes de imprimir (evento nativo), garantir que a assinatura esteja na tag <img>
+        window.onbeforeprint = saveSignatureForPrint;
+
+    </script>
+</body>
+</html>
